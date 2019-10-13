@@ -55,7 +55,8 @@ python awd_lstm/generate.py --path data/wikitext-2 --tie_weights --vocab_file=vo
 ```
 
 # Finetuning Language Models
-To finetune on a dataset, you'll need the saved vocabulary file and the pretrained weights. For text datasets, you will need to preprocess them such that each sample is separated by a blank line (the code replaces this with an ```<eos>``` token.) Here's an example finetuning the iMDB dataset on a pretrained model trained using WikiText-103:
+To finetune on a dataset, you'll need the saved vocabulary file and the pretrained weights. For text datasets, you will need to preprocess them such that each sample is separated by a blank line (the code replaces this with an ```<eos>``` token) and each sample has been pre-tokenized (the code should only need to do ```.split()``` to produce tokens). Here's an example finetuning the iMDB dataset on a pretrained model trained using WikiText-103:
+	
 ```
 python awd_lstm/main.py --path=data/imdb --train=train.txt --valid=valid.txt --test=test.txt --output=imdb_finetuned --bs=60 --bptt=60 --epochs=10 --use_var_bptt --tie_weights --load_vocab --vocab_file=vocab.pth --use_pretrained --pretrained_file=pretrained_wt103.pth --gpu=0
 ```
