@@ -7,6 +7,9 @@ from dropout import RNNDropout, EmbeddingDropout, WeightDropout
 from utils import repackage_hidden
 
 class RNNModel(nn.Module):
+    """
+    Wrapper for Language Models.
+    """
     def __init__(self, encoder, decoder, tie_weights=True, initrange=0.1):
         super(RNNModel, self).__init__()
         self.encoder = encoder
@@ -28,6 +31,9 @@ class RNNModel(nn.Module):
         return out
     
 class RNNClassifier(nn.Module):
+    """
+    Wrapper for Classifier. Used for ULMFiT.
+    """
     def __init__(self, encoder, decoder):
         super(RNNClassifier, self).__init__()
         self.encoder = encoder
@@ -57,6 +63,9 @@ class RNNClassifier(nn.Module):
         return logits
 
 class AWDLSTMEncoder(nn.Module):
+    """
+    AWD-LSTM Encoder as proposed by Merity et al. (2017) 
+    """
     def __init__(self, vocab_sz, emb_dim, hidden_dim, num_layers=1, emb_dp=0.1, weight_dp=0.5, input_dp=0.3, hidden_dp=0.3, tie_weights=True, padding_idx=1):
         super(AWDLSTMEncoder, self).__init__()
         self.embeddings = nn.Embedding(vocab_sz, emb_dim, padding_idx=padding_idx)
@@ -71,7 +80,6 @@ class AWDLSTMEncoder(nn.Module):
     
     def init_hidden(self, bs):
         weight = next(self.parameters())
-        
         hidden = [weight.new_zeros(1, bs, self.rnn[i].hidden_size) for i in range(len(self.rnn))]
         cell  = [weight.new_zeros(1, bs, self.rnn[i].hidden_size) for i in range(len(self.rnn))]
         
@@ -82,6 +90,10 @@ class AWDLSTMEncoder(nn.Module):
     
     def forward(self, x):
         msl, bs = x.shape
+
+        # Initialize hidden states or detatch from history
+        # We need to detatch or else the model will backprop
+        # through previous batches on a new batch
         if self.hidden is None and self.cell is None:
             self.hidden, self.cell = self.init_hidden(bs)
         else:
@@ -93,6 +105,7 @@ class AWDLSTMEncoder(nn.Module):
         raw_output = []
         dropped_output = []
         out = self.input_dp(out)
+
         for i in range(len(self.rnn)):
             out, (self.hidden[i], self.cell[i]) = self.weight_dp[i](out, (self.hidden[i], self.cell[i]))
             raw_output.append(out)
@@ -101,9 +114,17 @@ class AWDLSTMEncoder(nn.Module):
                 out = self.hidden_dp(out)
                 dropped_output.append(out)
 
+        # out is the final processed RNN output
+        # self.hidden is a list of all hidden states. Use the last one.
+        # raw_output is a list with all raw RNN outputs
+        # dropped_output is a list with all RNN outputs with RNN dropout applied
+        # dropped_output contains one less item than raw_output at all times
         return out, self.hidden, raw_output, dropped_output
 
 class LSTMEncoder(nn.Module):
+    """
+    Basic LSTM Encoder for Language Modeling 
+    """
     def __init__(self, vocab_sz, emb_dim, hidden_dim, num_layers=1, dropout=0.5):
         super(LSTMEncoder, self).__init__()
         self.embeddings = nn.Embedding(vocab_sz, emb_dim)
@@ -138,12 +159,19 @@ class LSTMEncoder(nn.Module):
         return out, self.hidden, self.cell
 
 class DropoutLinearDecoder(nn.Module):
+    """
+    Linear Decoder with output RNN Dropout. Used with AWD LSTM. 
+    """
     def __init__(self, hidden_dim, vocab_sz, out_dp=0.4):
         super(DropoutLinearDecoder, self).__init__()
         self.fc1 = nn.Linear(hidden_dim, vocab_sz)
         self.out_dp = RNNDropout(out_dp)
         
     def forward(self, out, hidden, raw, dropped, return_states=False):
+        # Applies RNN Dropout on the RNN output and
+        # appends to the dropped_output list. Raw_output
+        # and dropped_output should have equal number of
+        # elements now
         out = self.out_dp(out)
         dropped.append(out)
         out = self.fc1(out)
@@ -161,6 +189,9 @@ class LinearDecoder(nn.Module):
         return self.fc1(out)
 
 class ConcatPoolingDecoder(nn.Module):
+    """
+    Concat Pooling Decoder from Howard & Ruder (2018)
+    """
     def __init__(self, hidden_dim, bneck_dim, out_dim, dropout_pool=0.2, dropout_proj=0.1, include_hidden=True):
         super(ConcatPoolingDecoder, self).__init__()
         self.bn1 = nn.BatchNorm1d(hidden_dim * 3 if include_hidden else hidden_dim * 2)

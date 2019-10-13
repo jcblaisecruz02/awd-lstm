@@ -10,12 +10,14 @@ Code in this repository allows you to:
 2. Finetune language models on other datasets; and
 3. Finetune language models for text classification (ULMFiT)
 
+In addition, you can use the layers written in ```layers.py``` for your own work. Details are provided below.
+
 This repository is a work in progress and so not all techniques have been added. Please see the **To-do** section below to see what has not been added yet.
 
 # Requirements
 Libraries you need:
 * PyTorch - At least v.1.0.0
-* Transformers - The learning rate scheduling comes from there
+* [Transformers](https://github.com/huggingface/transformers) - The learning rate scheduler we use comes from there
 * spacy - We use spacy tokenizers for ULMFiT
 * numpy and pandas - For random numbers and data manipulation
 * tqdm - Progress bars to keep our sanity intact :)
@@ -58,8 +60,55 @@ To finetune on a dataset, you'll need the saved vocabulary file and the pretrain
 python awd_lstm/main.py --path=data/imdb --train=train.txt --valid=valid.txt --test=test.txt --output=imdb_finetuned --bs=60 --bptt=60 --epochs=10 --use_var_bptt --tie_weights --load_vocab --vocab_file=vocab.pth --use_pretrained --pretrained_file=pretrained_wt103.pth --gpu=0
 ```
 
+I cannot, at the moment, provide my own pretrained WikiText-103 models. For the results involving pretrained models, I adapted the pretrained weights provided by [FastAI](https://www.fast.ai/) for now (compatible checkpoint [here](https://storage.googleapis.com/blaisecruz/ulmfit/pretrained_wt103.zip)). More details are in the **To-do** section below.
+
 # ULMFiT / Finetuning Classifiers
 To finetune a classifier, make sure you have a finetuned language model at hand. Load the ```ULMFiT.ipynb``` notebook and follow the instructions there.
+
+# Using Layers
+The ```layers.py``` file provides some layers you can use outside of this project.
+
+Included so far are:
+* Two encoder layers - ```AWDLSTMEncoder``` and ```LSTMEncoder```
+* Two language modeling decoder layers - ```DropoutLinearDecoder``` and ```LinearDecoder```
+* One classification decoder layer - ```ConcatPoolingDecoder```
+
+For language modeling, a ```RNNModel``` wrapper is provided. Pass in an encoder and a decoder and you're good to go. For example:
+
+```python
+encoder = AWDLSTMEncoder(vocab_sz=vocab_sz, emb_dim=400, hidden_dim=1152, num_layers=3, tie_weights=True)
+decoder = DropoutLinearDecoder(hidden_dim=400, vocab_sz=vocab_sz) # Using 400 since we're tying weights
+model = RNNModel(encoder, decoder, tie_weights=True).to(device)
+
+# Your code here
+```
+
+The encoders in the API are written as standalone and independent - they can ouput any number of parameters. The decoders in the API are written to be able to handle any number of parameters given to them. This allows the ```RNNModel``` to act like a wrapper - you can mix and match encoders and decoders. Please refer to ```layers.py``` for more information
+
+Classification is very similar, using the ```RNNClassifier``` wrapper. For example:
+
+```python
+encoder = AWDLSTMEncoder(vocab_sz=vocab_sz, emb_dim=400, hidden_dim=1152, num_layers=3)
+decoder = ConcatPoolingDecoder(hidden_dim=400, bneck_dim=50, out_dim=2)
+model = RNNClassifier(encoder, decoder).to(device)
+
+# Your code here
+```
+
+The ```RNNClassifier``` wrapper also has class functions for freezing and unfreezing layers (for ULMFiT). For now, it's only tested to work without errors with the ```AWDLSTMEncoder```, since it was designed for it.
+
+The encoders and decoders can also be used without the ```RNNModel``` and ```RNNClassifier``` wrappers, should you want to. You can use them inside your own models, like the ```AWDLSTMEncoder``` for example:
+
+```python
+
+class MyModel(nn.Module):
+    def __init__(self, ...):
+        super(MyModel, self).__init__()
+        self.encoder = AWDLSTMEncoder(...)
+
+        # Your code here
+
+```
 
 # Changelog
 Version 0.3
