@@ -1,5 +1,7 @@
 import torch
+import torch.utils.data as data_utils
 import numpy as np
+from tqdm import tqdm
 
 def batchify(data, bsz):
     # Work out how cleanly we can divide the dataset into bsz parts.
@@ -41,5 +43,35 @@ def repackage_hidden(h):
     else:
         return tuple(repackage_hidden(v) for v in h)
     
+def accuracy(out, y):
+    return torch.sum(torch.max(torch.softmax(out, dim=1), dim=1)[1] == y).item() / len(y)
+    
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+def vectorize(text, word2idx, vocab_set, msl):
+    v_text = [word2idx[word] if word in vocab_set else word2idx['<unk>'] for word in text]
+  
+    v_text = v_text[:msl]
+
+    if len(v_text) < msl:
+        v_text = v_text + [word2idx['<pad>'] for _ in range(msl - len(v_text))]
+  
+    return v_text
+
+def produce_dataloaders(X_train, y_train, X_val, y_val, word2idx, vocab_set, msl, bs, drop_last=True):
+    X_train =  [vectorize(text, word2idx, vocab_set, msl) for text in tqdm(X_train)]
+    X_val =  [vectorize(text, word2idx, vocab_set, msl) for text in tqdm(X_val)]
+    
+    X_train = torch.LongTensor(X_train)
+    X_val = torch.LongTensor(X_val)
+    y_train = torch.LongTensor(y_train)
+    y_val = torch.LongTensor(y_val)
+    
+    train_set = data_utils.TensorDataset(X_train, y_train)
+    val_set = data_utils.TensorDataset(X_val, y_val)
+
+    train_loader = data_utils.DataLoader(train_set, bs, drop_last=drop_last)
+    val_loader = data_utils.DataLoader(val_set, bs, drop_last=drop_last)
+    
+    return train_loader, val_loader

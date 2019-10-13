@@ -1,16 +1,14 @@
-# Credits to the contributors at fast.ai!
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 import warnings
 
+# Credits to the contributors at fast.ai
 def dropout_mask(x, sz, p):
     return x.new(*sz).bernoulli_(1-p).div_(1-p)
   
 class RNNDropout(nn.Module):
-    """Applies dropout consistent along a time dimension"""
     def __init__(self, p=0.5):
         super().__init__()
         self.p=p
@@ -22,7 +20,6 @@ class RNNDropout(nn.Module):
         return x * m
 
 class EmbeddingDropout(nn.Module):
-    """Dropout for embeddings"""
     def __init__(self, emb, embed_p):
         super(EmbeddingDropout, self).__init__()
         self.emb = emb
@@ -44,7 +41,6 @@ class EmbeddingDropout(nn.Module):
         return out
     
 class WeightDropout(nn.Module):
-    """Dropconnect for hidden weight matrices in RNNs"""
     def __init__(self, module, weight_p, layer_names=['weight_hh_l0']):
         super(WeightDropout, self).__init__()
         self.module,self.weight_p,self.layer_names = module,weight_p,layer_names
