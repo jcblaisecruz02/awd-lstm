@@ -55,10 +55,12 @@ python awd_lstm/generate.py --path data/wikitext-2 --tie_weights --vocab_file=vo
 ```
 
 # Finetuning Language Models
-To finetune on a dataset, you'll need the saved vocabulary file and the pretrained weights. For text datasets, you will need to preprocess them such that each sample is separated by a blank line (the code replaces this with an ```<eos>``` token.) Here's an example finetuning the iMDB dataset on a pretrained model trained using WikiText-103
+To finetune on a dataset, you'll need the saved vocabulary file and the pretrained weights. For text datasets, you will need to preprocess them such that each sample is separated by a blank line (the code replaces this with an ```<eos>``` token.) Here's an example finetuning the iMDB dataset on a pretrained model trained using WikiText-103:
 ```
 python awd_lstm/main.py --path=data/imdb --train=train.txt --valid=valid.txt --test=test.txt --output=imdb_finetuned --bs=60 --bptt=60 --epochs=10 --use_var_bptt --tie_weights --load_vocab --vocab_file=vocab.pth --use_pretrained --pretrained_file=pretrained_wt103.pth --gpu=0
 ```
+
+If you need an example for how to preprocess data, I provide a version of the iMDB Sentiments dataset [here](https://www.kaggle.com/jcblaise/imdb-sentiments). The .csv files are for classification and the .txt files are for language model finetuning.
 
 I cannot, at the moment, provide my own pretrained WikiText-103 models. For the results involving pretrained models, I adapted the pretrained weights provided by [FastAI](https://www.fast.ai/) for now (compatible checkpoint [here](https://storage.googleapis.com/blaisecruz/ulmfit/pretrained_wt103.zip)). More details are in the **To-do** section below.
 
@@ -133,9 +135,8 @@ For AWD-LSTM training:
 * NT-ASGD not implemented
 
 For ULMFiT:
-* Discriminative learning rates missing
-* STLR (although I personally added Linear Warmup Scheduling for ULMFiT)
-* Learning rate sweeping like in FastAI
+* Discriminative learning rates
+* STLR*
 
 Miscellany
 * Distributed training
@@ -143,6 +144,8 @@ Miscellany
 For now, ULMFiT achieves a validation accuracy of 91.93%, which is 3.47 points below the paper's original result of 95.4%. I surmise that this score will get closer once I add in all the missing features. For now, the repo is a partial reproduction.
 
 The pretrained WikiText-103 model used in the results was also adapted from FastAI. I will update with newer scores once I add in distributed pretraining to train my own language model.
+
+\* *The finetuning code prefers Linear Warmup Schedulers over Slanted Triangular Learning Rate Schedulers, but for completion's sake, I will add STLR as an option.*
 
 # Credits
 Credits are due to the following:
