@@ -12,7 +12,11 @@ Code in this repository allows you to:
 
 In addition, you can use the layers written in ```layers.py``` for your own work. Details are provided below.
 
-This repository is a work in progress and so not all techniques have been added. Please see the **To-do** section below to see what has not been added yet.
+This repository is a work in progress and so not all techniques have been added. Please see the **To-do** section below to see what has not been added yet. Below is also a tracker on the current reproduced scores compared to the papers' original scores.
+
+**Current Results**
+* AWD-LSTM on WikiText-2 - Current Test PPL: 74.2074 / **Target Test PPL: 65.8** / Difference: 8.4074
+* ULMFiT on iMDB - Current Accuracy: 91.93% / **Target Accuracy: 95.4%** / Difference: 3.47
 
 # Requirements
 Libraries you need:
@@ -56,7 +60,7 @@ python awd_lstm/generate.py --path data/wikitext-2 --tie_weights --vocab_file=vo
 
 # Finetuning Language Models
 To finetune on a dataset, you'll need the saved vocabulary file and the pretrained weights. For text datasets, you will need to preprocess them such that each sample is separated by a blank line (the code replaces this with an ```<eos>``` token) and each sample has been pre-tokenized (the code should only need to do ```.split()``` to produce tokens). Here's an example finetuning the iMDB dataset on a pretrained model trained using WikiText-103:
-	
+
 ```
 python awd_lstm/main.py --path=data/imdb --train=train.txt --valid=valid.txt --test=test.txt --output=imdb_finetuned --bs=60 --bptt=60 --epochs=10 --use_var_bptt --tie_weights --load_vocab --vocab_file=vocab.pth --use_pretrained --pretrained_file=pretrained_wt103.pth --gpu=0
 ```
