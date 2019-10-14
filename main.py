@@ -115,15 +115,17 @@ elif args.decoder == 'linear':
     decoder = LinearDecoder(hidden_dim=args.emb_dim if args.tie_weights else args.hidden_dim, vocab_sz=vocab_sz)
     
 # Produce model
-model = RNNModel(encoder, decoder, tie_weights=args.tie_weights, initrange=args.initrange).to(device)
+model = RNNModel(encoder, decoder, tie_weights=args.tie_weights, initrange=args.initrange)
 print(model)
 
 # Pretrained
 if args.use_pretrained:
     print("Using pretrained model {}".format(args.pretrained_file))
     with open('{}/{}'.format(path, args.pretrained_file), 'rb') as f:
-        inc = model.load_state_dict(torch.load(f), strict=False)
+        inc = model.load_state_dict(torch.load(f, map_location=device), strict=False)
     print(inc)
+    
+model = model.to(device);
 
 # Optimization setup
 criterion = nn.CrossEntropyLoss()
