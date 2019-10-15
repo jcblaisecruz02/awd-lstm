@@ -16,7 +16,7 @@ This repository is a work in progress and so not all techniques have been added.
 
 **Current Results**
 * AWD-LSTM on WikiText-2 - Current Test PPL: 74.2074 / **Target Test PPL: 65.8** / Difference: 8.4074
-* ULMFiT on iMDB - Current Accuracy: 91.93% / **Target Accuracy: 95.4%** / Difference: 3.47
+* ULMFiT on iMDB - Current Accuracy: 92.11% / **Target Accuracy: 95.4%** / Difference: 3.29
 
 # Requirements
 Libraries you need:
@@ -146,7 +146,7 @@ For ULMFiT:
 Miscellany
 * Distributed training
 
-For now, ULMFiT achieves a validation accuracy of 91.93%, which is 3.47 points below the paper's original result of 95.4%. I surmise that this score will get closer once I add in all the missing features. For now, the repo is a partial reproduction.
+For now, ULMFiT achieves a validation accuracy of 92.11%, which is 3.29 points below the paper's original result of 95.4%. I surmise that this score will get closer once I add in all the missing features. For now, the repo is a partial reproduction.
 
 The pretrained WikiText-103 model used in the results was also adapted from FastAI. I will update with newer scores once I add in distributed pretraining to train my own language model.
 
