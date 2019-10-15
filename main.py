@@ -74,6 +74,7 @@ np.random.seed(args.seed)
 torch.manual_seed(args.seed);
 torch.cuda.manual_seed(args.seed);
 torch.backends.cudnn.deterministic = True
+print("Using device: {}".format(device))
 
 # Produce or load the dataset
 path = args.path
