@@ -34,19 +34,19 @@ The scripts can be used for language modeling, following the ideas proposed in M
 
 Train an AWD-LSTM using SGD with variable BPTT lengths (Valid PPL: 77.8227 / Test PPL: 74.2074)
 ```
-python awd_lstm/main.py --path=data/wikitext-2 --train=wiki.train.tokens --valid=wiki.valid.tokens --test=wiki.test.tokens --output=pretrained_wt2 --bs=80 --bptt=80 --epochs=150 --use_var_bptt --tie_weights --save_vocab --vocab_file=vocab.pth --gpu=0
+python awd-lstm/main.py --path=data/wikitext-2 --train=wiki.train.tokens --valid=wiki.valid.tokens --test=wiki.test.tokens --output=pretrained_wt2 --bs=80 --bptt=80 --epochs=150 --use_var_bptt --tie_weights --save_vocab --vocab_file=vocab.pth --gpu=0
 ```
 
 Train an AWD-LSTM using Adam+LinearWarmup with variable BPTT lengths (Valid PPL: 85.3083 / Test PPL: 80.9872)
 ```
-python awd_lstm/main.py --path=data/wikitext-2 --train=wiki.train.tokens --valid=wiki.valid.tokens --test=wiki.test.tokens --output=pretrained_wt2 --bs=80 --bptt=80 --epochs=150 --use_var_bptt --tie_weights --optimizer=adam --lr=3e-4 --warmup_pct=0.1 --save_vocab --vocab_file=vocab.pth --gpu=0
+python awd-lstm/main.py --path=data/wikitext-2 --train=wiki.train.tokens --valid=wiki.valid.tokens --test=wiki.test.tokens --output=pretrained_wt2 --bs=80 --bptt=80 --epochs=150 --use_var_bptt --tie_weights --optimizer=adam --lr=3e-4 --warmup_pct=0.1 --save_vocab --vocab_file=vocab.pth --gpu=0
 ```
 
 Alternatively, you can test language modeling by training a simple LSTM baseline. Here is an example:
 
 Train a basic LSTM using SGD without variable BPTT lengths (Valid PPL: 101.1345 / Test PPL: 95.7615)
 ```
-python awd_lstm/main.py --path=data/wikitext-2 --train=wiki.train.tokens --valid=wiki.valid.tokens --test=wiki.test.tokens --output=basic_wt2 --bs=80 --bptt=80 --epochs=100 --tie_weights --encoder=lstm --decoder=linear --lr=20 --save_vocab --vocab_file=vocab.pth --gpu=0
+python awd-lstm/main.py --path=data/wikitext-2 --train=wiki.train.tokens --valid=wiki.valid.tokens --test=wiki.test.tokens --output=basic_wt2 --bs=80 --bptt=80 --epochs=100 --tie_weights --encoder=lstm --decoder=linear --lr=20 --save_vocab --vocab_file=vocab.pth --gpu=0
 
 ```
 
@@ -55,14 +55,14 @@ This is also how language model pretraining works. Be sure to use the ```--save_
 # Generation
 You can use your pretrained models to generate text. Here is an example:
 ```
-python awd_lstm/generate.py --path data/wikitext-2 --tie_weights --vocab_file=vocab.pth --pretrained_file=pretrained_wt103.pth --temp=0.7 --nwords=100
+python awd-lstm/generate.py --path data/wikitext-2 --tie_weights --vocab_file=vocab.pth --pretrained_file=pretrained_wt103.pth --temp=0.7 --nwords=100
 ```
 
 # Finetuning Language Models
 To finetune on a dataset, you'll need the saved vocabulary file and the pretrained weights. For text datasets, you will need to preprocess them such that each sample is separated by a blank line (the code replaces this with an ```<eos>``` token) and each sample has been pre-tokenized (the code should only need to do ```.split()``` to produce tokens). Here's an example finetuning the iMDB dataset on a pretrained model trained using WikiText-103:
 
 ```
-python awd_lstm/main.py --path=data/imdb --train=train.txt --valid=valid.txt --test=test.txt --output=imdb_finetuned --bs=60 --bptt=60 --epochs=10 --use_var_bptt --tie_weights --load_vocab --vocab_file=vocab.pth --use_pretrained --pretrained_file=pretrained_wt103.pth --gpu=0
+python awd-lstm/main.py --path=data/imdb --train=train.txt --valid=valid.txt --test=test.txt --output=imdb_finetuned --bs=60 --bptt=60 --epochs=10 --use_var_bptt --tie_weights --load_vocab --vocab_file=vocab.pth --use_pretrained --pretrained_file=pretrained_wt103.pth --gpu=0
 ```
 
 If you need an example for how to preprocess data, I provide a version of the iMDB Sentiments dataset [here](https://www.kaggle.com/jcblaise/imdb-sentiments). The .csv files are for classification and the .txt files are for language model finetuning.
