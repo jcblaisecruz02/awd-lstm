@@ -53,6 +53,7 @@ parser.add_argument('--no_lr_scaling', action='store_true', help='no lr scaling 
 parser.add_argument('--optimizer', type=str, default='sgd', choices=['sgd', 'adam'], help='Optimzer to use')
 parser.add_argument('--no_warmup', action='store_true', help='do not use linear warmups when using Adam')
 parser.add_argument('--warmup_pct', type=float, default=0.1, help='percentage of steps for warmup')
+parser.add_argument('--disc_rate', type=float, default=1.0, help='Discriminative learning rate scaling')
 
 parser.add_argument('--epochs', type=int, default=2, help='epochs to train the network')
 parser.add_argument('--clip', type=float, default=0.25, help='gradient clipping')
@@ -127,13 +128,21 @@ if args.use_pretrained:
     
 model = model.to(device);
 
+# Parameter groups
+p_groups = [{'name': '0', 'params': []}, {'name': '1', 'params': []}]
+for n, p in model.named_parameters():
+    if 'rnn' in n:
+        p_groups[1]['params'].append(p)
+    else:
+        p_groups[0]['params'].append(p)
+
 # Optimization setup
 criterion = nn.CrossEntropyLoss()
 optimizer, scheduler = None, None
 if args.optimizer == 'sgd':
-    optimizer = optim.SGD(model.parameters(), lr=args.lr)
+    optimizer = optim.SGD(p_groups, lr=args.lr)
 elif args.optimizer == 'adam':
-    optimizer = optim.Adam(model.parameters(), lr=args.lr)
+    optimizer = optim.Adam(p_groups, lr=args.lr)
     steps = len(train_loader) * args.epochs
     if not args.no_warmup:
         scheduler = WarmupLinearSchedule(optimizer, warmup_steps=int(steps * args.warmup_pct), t_total=steps)
@@ -163,6 +172,10 @@ try:
             if args.use_var_bptt and not args.no_lr_scaling:
                 seq_len, _ = x.shape
                 optimizer.param_groups[0]['lr'] = args.lr * seq_len / args.bptt
+                
+            # Adjust discriminative learning rates
+            for i in range(len(optimizer.param_groups)):
+                optimizer.param_groups[i]['lr'] /= args.disc_rate ** i
 
             x = x.to(device)
             y = y.to(device)
