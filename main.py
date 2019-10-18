@@ -166,42 +166,45 @@ try:
         model.train()
         model.reset_hidden()
         train_loss = 0
-        for batch in tqdm(train_loader):
-            x, y = batch
+        with tqdm(total=len(train_loader)) as t:
+            for batch in train_loader:
+                x, y = batch
 
-            # Scale learning rate to sequence length
-            if args.use_var_bptt and not args.no_lr_scaling:
-                seq_len, _ = x.shape
-                optimizer.param_groups[0]['lr'] = args.lr * seq_len / args.bptt
-                
-            # Adjust discriminative learning rates
-            for i in range(len(optimizer.param_groups)):
-                optimizer.param_groups[i]['lr'] /= args.disc_rate ** i
+                # Scale learning rate to sequence length
+                if args.use_var_bptt and not args.no_lr_scaling:
+                    seq_len, _ = x.shape
+                    optimizer.param_groups[0]['lr'] = args.lr * seq_len / args.bptt
 
-            x = x.to(device)
-            y = y.to(device)
+                # Adjust discriminative learning rates
+                for i in range(len(optimizer.param_groups)):
+                    optimizer.param_groups[i]['lr'] /= args.disc_rate ** i
 
-            out = model(x, return_states=True)
-            if args.encoder == 'awd_lstm': out, hidden, raw_out, dropped_out = out
-            raw_loss = criterion(out.view(-1, vocab_sz), y)
+                x = x.to(device)
+                y = y.to(device)
 
-            # AR/TAR
-            loss = raw_loss
-            if args.encoder == 'awd_lstm':
-                loss += args.alpha * dropped_out[-1].pow(2).mean()
-                loss += args.beta * (raw_out[-1][1:] - raw_out[-1][:-1]).pow(2).mean()
+                out = model(x, return_states=True)
+                if args.encoder == 'awd_lstm': out, hidden, raw_out, dropped_out = out
+                raw_loss = criterion(out.view(-1, vocab_sz), y)
 
-            optimizer.zero_grad()
-            loss.backward()
-            nn.utils.clip_grad_norm_(model.parameters(), args.clip)
-            optimizer.step()
-            if scheduler is not None: scheduler.step()
+                # AR/TAR
+                loss = raw_loss
+                if args.encoder == 'awd_lstm':
+                    loss += args.alpha * dropped_out[-1].pow(2).mean()
+                    loss += args.beta * (raw_out[-1][1:] - raw_out[-1][:-1]).pow(2).mean()
 
-            # Restore original LR
-            if args.use_var_bptt and not args.no_lr_scaling:
-                optimizer.param_groups[0]['lr'] = args.lr
+                optimizer.zero_grad()
+                loss.backward()
+                nn.utils.clip_grad_norm_(model.parameters(), args.clip)
+                optimizer.step()
+                t.set_postfix({'lr{}'.format(i): optimizer.param_groups[i]['lr'] for i in range(len(optimizer.param_groups))})
+                if scheduler is not None: scheduler.step()
 
-            train_loss += raw_loss.item()
+                # Restore original LR
+                if args.use_var_bptt and not args.no_lr_scaling:
+                    optimizer.param_groups[0]['lr'] = args.lr
+
+                t.update()
+                train_loss += raw_loss.item()
         train_loss /= len(train_loader)
         train_losses.append(train_loss)
 

@@ -65,6 +65,11 @@ To finetune on a dataset, you'll need the saved vocabulary file and the pretrain
 python awd-lstm/main.py --path=data/imdb --train=train.txt --valid=valid.txt --test=test.txt --output=imdb_finetuned --bs=60 --bptt=60 --epochs=10 --use_var_bptt --tie_weights --load_vocab --vocab_file=vocab.pth --use_pretrained --pretrained_file=pretrained_wt103.pth --gpu=0
 ```
 
+The above example finetunes using the methodlogy of Merity et al. (2017). Here is an example to finetune the AWD-LSTM model using Adam and discriminative learning rates (no LR scaling per variable BPTT length) like in FastAI.
+```
+python awd-lstm/main.py --path=data --train=train.txt --valid=valid.txt --test=test.txt --output=imdb/lm_data/imdb_finetuned_disc --bs=70 --bptt=80 --epochs=10 --tie_weights --load_vocab --vocab_file=pretrained_wt103/vocab.pth --use_pretrained --pretrained_file=pretrained_wt103/pretrained_wt103.pth --optimizer='adam' --lr=1e-3 --no_lr_scaling --disc_rate=2.0 --gpu=0
+```
+
 If you need an example for how to preprocess data, I provide a version of the iMDB Sentiments dataset [here](https://www.kaggle.com/jcblaise/imdb-sentiments). The .csv files are for classification and the .txt files are for language model finetuning.
 
 I cannot, at the moment, provide my own pretrained WikiText-103 models. For the results involving pretrained models, I adapted the pretrained weights provided by [FastAI](https://www.fast.ai/) for now (compatible checkpoint [here](https://storage.googleapis.com/blaisecruz/ulmfit/pretrained_wt103.zip)). More details are in the **To-do** section below.
