@@ -63,7 +63,7 @@ def eval_batch(model, criterion, val_loader, device=None):
     
     return val_loss, val_acc
 
-def one_cycle(model, criterion, optimizer, train_loader, val_loader, scheduler=None, clip=1.0, device=None, lr_decrease=2.6, stlr_warmup=0.1, lr=1e-2):
+def one_cycle(model, criterion, optimizer, train_loader, val_loader, scheduler=None, clip=1.0, device=None, lr_decrease=2.6, stlr_warmup=0.13, lr=1e-2):
     if scheduler is None:
         up = int(len(train_loader) * stlr_warmup)
         down = len(train_loader) - up

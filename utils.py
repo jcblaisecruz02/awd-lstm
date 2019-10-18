@@ -43,6 +43,14 @@ def repackage_hidden(h):
     else:
         return tuple(repackage_hidden(v) for v in h)
     
+def drop_mult(model, dm):
+    for i in range(len(model.encoder.rnn)):
+        model.encoder.weight_dp[i].weight_p *= dm
+    model.encoder.emb_dp.embed_p *= dm
+    model.encoder.hidden_dp.p *= dm
+    model.encoder.input_dp.p *= dm
+    return model
+    
 def accuracy(out, y):
     return torch.sum(torch.max(torch.softmax(out, dim=1), dim=1)[1] == y).item() / len(y)
     

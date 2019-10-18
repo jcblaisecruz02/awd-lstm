@@ -14,6 +14,7 @@ class RNNModel(nn.Module):
         super(RNNModel, self).__init__()
         self.encoder = encoder
         self.decoder = decoder
+        self.groups = ['encoder', 'rnn.0', 'rnn.1', 'rnn.2', 'decoder']
         
         if tie_weights:
             self.decoder.fc1.weight = self.encoder.embeddings.weight
@@ -25,6 +26,20 @@ class RNNModel(nn.Module):
         
     def reset_hidden(self):
         self.encoder.reset_hidden()
+        
+    def freeze(self):
+        for p in self.parameters():
+            p.requires_grad = False
+        
+    def unfreeze(self, ix):
+        to_unfreeze = self.groups[ix:]
+        for n, p in self.named_parameters():
+            for group in to_unfreeze:
+                if group in n: p.requires_grad = True
+                    
+    def unfreeze_all(self):
+        for p in self.parameters():
+            p.requires_grad = True
         
     def forward(self, x, **kwargs):
         out = self.decoder(*self.encoder(x), **kwargs)

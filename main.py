@@ -13,7 +13,7 @@ import argparse
 
 from transformers import WarmupLinearSchedule
 from layers import RNNModel, AWDLSTMEncoder, DropoutLinearDecoder, LSTMEncoder, LinearDecoder
-from utils import count_parameters, get_loaders
+from utils import count_parameters, get_loaders, drop_mult
 from data import Corpus, Dictionary
 
 parser = argparse.ArgumentParser()
@@ -45,7 +45,9 @@ parser.add_argument('--out_dp', type=float, default=0.4, help='output dropout')
 parser.add_argument('--initrange', type=float, default=0.05, help='initialization range')
 parser.add_argument('--tie_weights', action='store_true', help='tie embeddings and decoder weights')
 parser.add_argument('--use_pretrained', action='store_true', help='use pretrained weights')
+parser.add_argument('--freeze_encoder', action='store_true', help='freezes the encoder')
 parser.add_argument('--pretrained_file', type=str, default='pretrained_wt103', help='pretrained model file')
+parser.add_argument('--dm', type=float, default=1.0, help='dropout rate scaling')
 
 parser.add_argument('--anneal_factor', type=float, default=4.0, help='learning rate anneal rate')
 parser.add_argument('--lr', type=float, default=30, help='learning rate')
@@ -118,6 +120,10 @@ elif args.decoder == 'linear':
     
 # Produce model
 model = RNNModel(encoder, decoder, tie_weights=args.tie_weights, initrange=args.initrange)
+model = drop_mult(model, dm=args.dm)
+if args.freeze_encoder:
+    model.freeze()
+    model.unfreeze(-1)
 print(model)
 
 # Pretrained
