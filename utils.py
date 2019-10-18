@@ -50,6 +50,15 @@ def drop_mult(model, dm):
     model.encoder.hidden_dp.p *= dm
     model.encoder.input_dp.p *= dm
     return model
+
+def get_param_groups(model):
+    p_groups = [{'name': '0', 'params': []}, {'name': '1', 'params': []}]
+    for n, p in model.named_parameters():
+        if 'rnn' in n:
+            p_groups[1]['params'].append(p)
+        else:
+            p_groups[0]['params'].append(p)
+    return p_groups
     
 def accuracy(out, y):
     return torch.sum(torch.max(torch.softmax(out, dim=1), dim=1)[1] == y).item() / len(y)

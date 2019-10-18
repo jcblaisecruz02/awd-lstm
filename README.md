@@ -140,8 +140,8 @@ For AWD-LSTM training:
 * NT-ASGD not implemented
 
 For ULMFiT:
-* Discriminative learning rates
-* STLR*
+* Special tokens
+* Embeddings vocabulary adaptation
 
 Miscellany
 * Distributed training
@@ -150,7 +150,6 @@ For now, ULMFiT achieves a validation accuracy of 92.11%, which is 3.29 points b
 
 The pretrained WikiText-103 model used in the results was also adapted from FastAI. I will update with newer scores once I add in distributed pretraining to train my own language model.
 
-\* *The finetuning code prefers Linear Warmup Schedulers over Slanted Triangular Learning Rate Schedulers, but for completion's sake, I will add STLR as an option.*
 
 # Credits
 Credits are due to the following:
