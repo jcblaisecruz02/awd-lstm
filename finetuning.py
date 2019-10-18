@@ -28,7 +28,7 @@ def train_batch(model, criterion, optimizer, train_loader, scheduler=None, clip=
             optimizer.step()
             
             t.set_postfix({'lr{}'.format(i): optimizer.param_groups[i]['lr'] for i in range(len(optimizer.param_groups))})
-            scheduler.step()
+            if scheduler is not None: scheduler.step()
 
             train_loss += loss.item()
             train_acc += accuracy(out, targets)
@@ -63,7 +63,12 @@ def eval_batch(model, criterion, val_loader, device=None):
     
     return val_loss, val_acc
 
-def one_cycle(model, criterion, optimizer, train_loader, val_loader, scheduler=None, clip=0.25, device=None, lr_decrease=2):
+def one_cycle(model, criterion, optimizer, train_loader, val_loader, scheduler=None, clip=1.0, device=None, lr_decrease=2.6, stlr_warmup=0.1, lr=1e-2):
+    if scheduler is None:
+        up = int(len(train_loader) * stlr_warmup)
+        down = len(train_loader) - up
+        scheduler = torch.optim.lr_scheduler.CyclicLR(optimizer, base_lr=0, max_lr=lr, cycle_momentum=False, step_size_up=up, step_size_down=down)
+    
     train_loss, train_acc = train_batch(model, criterion, optimizer, train_loader, scheduler=scheduler, clip=clip, device=device, lr_decrease=lr_decrease)
     val_loss, val_acc = eval_batch(model, criterion, val_loader, device=device)
     print("Train Loss: {:.4f} | Train Acc: {:.4f} | Val Loss: {:.4f} | Val Acc: {:.4f}".format(train_loss, train_acc, val_loss, val_acc))
