@@ -59,10 +59,18 @@ python awd-lstm/generate.py --path data/wikitext-2 --tie_weights --vocab_file=vo
 ```
 
 # Finetuning Language Models
-To finetune on a dataset, you'll need the saved vocabulary file and the pretrained weights. For text datasets, you will need to preprocess them such that each sample is separated by a blank line (the code replaces this with an ```<eos>``` token) and each sample has been pre-tokenized (the code should only need to do ```.split()``` to produce tokens). Here's an example finetuning the iMDB dataset on a pretrained model trained using WikiText-103:
+To finetune on a dataset, you'll need the saved vocabulary file and the pretrained weights. For text datasets, you will need to preprocess them such that each sample is separated by a blank line (the code replaces this with an ```<eos>``` token) and each sample has been pre-tokenized (the code should only need to do ```.split()``` to produce tokens). 
+
+Here's an example finetuning the iMDB dataset on a pretrained model trained using WikiText-103. We first freeze the model and finetune only the last layer:
 
 ```
-python awd-lstm/main.py --path=data/imdb --train=train.txt --valid=valid.txt --test=test.txt --output=imdb_finetuned --bs=60 --bptt=60 --epochs=10 --use_var_bptt --tie_weights --load_vocab --vocab_file=vocab.pth --use_pretrained --pretrained_file=pretrained_wt103.pth --gpu=0
+python awd-lstm/main.py --path=data --train=imdb/lm_data/train.txt --valid=imdb/lm_data/valid.txt --test=imdb/lm_data/test.txt --output=imdb/lm_data/imdb_finetuned_part --bs=70 --bptt=70 --epochs=10 --tie_weights --load_vocab --vocab_file=pretrained_wt103/vocab.pth --use_pretrained --pretrained_file=pretrained_wt103/pretrained_wt103.pth --freeze_encoder --optimizer=adam --no_lr_scaling --lr=1e-2 --gpu=0
+```
+
+Then we take that and finetune it for 10 full epochs unfrozen.
+
+```
+python awd-lstm/main.py --path=data --train=imdb/lm_data/train.txt --valid=imdb/lm_data/valid.txt --test=imdb/lm_data/test.txt --output=imdb/lm_data/imdb_finetuned_full --bs=70 --bptt=70 --epochs=10 --tie_weights --load_vocab --vocab_file=pretrained_wt103/vocab.pth --use_pretrained --pretrained_file=imdb/lm_data/imdb_finetuned_part.pth --optimizer=adam --lr=1e-3 --gpu=0
 ```
 
 If you need an example for how to preprocess data, I provide a version of the iMDB Sentiments dataset [here](https://www.kaggle.com/jcblaise/imdb-sentiments). The .csv files are for classification and the .txt files are for language model finetuning.
