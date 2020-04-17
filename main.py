@@ -63,6 +63,7 @@ parser.add_argument('--alpha', type=float, default=2.0, help='AR alpha parameter
 parser.add_argument('--beta', type=float, default=1.0, help='TAR beta parameter')
 
 parser.add_argument('--no_cuda', action='store_true', help='do not use CUDA')
+parser.add_argument('--save_graphs', action='store_true', help='save the loss curve and final epoch results')
 parser.add_argument('--gpu', type=int, default=0, help='index of GPU to use')
 parser.add_argument('--seed', type=int, default=42, help='random seed')
 
@@ -272,7 +273,8 @@ test_loss /= len(test_loader)
 print("Test Loss {:.4f} | Test Ppl {:.4f}".format(test_loss, np.exp(test_loss)))
 
 # Saving graphs
-print("Saving loss data")
-pd.DataFrame(data={'train': train_losses, 'valid': valid_losses}).to_csv('{}/{}.csv'.format(path, args.output), index=False)
-with open('{}/{}.txt'.format(path, args.output), 'w') as f:
-    f.write("Best loss {:.4f} | Best ppl {:.4f} | Epoch {} | Test loss {:.4f} | Test ppl {:.4f}".format(best_loss, np.exp(best_loss), best_epoch, test_loss, np.exp(test_loss)))
+if args.save_graphs:
+    print("Saving loss data")
+    pd.DataFrame(data={'train': train_losses, 'valid': valid_losses}).to_csv('{}/{}.csv'.format(path, args.output), index=False)
+    with open('{}/{}.txt'.format(path, args.output), 'w') as f:
+        f.write("Best loss {:.4f} | Best ppl {:.4f} | Epoch {} | Test loss {:.4f} | Test ppl {:.4f}".format(best_loss, np.exp(best_loss), best_epoch, test_loss, np.exp(test_loss)))
